@@ -1,4 +1,7 @@
 
+<p align="center">English / <a href="https://tettekete.github.io/vscode-git-mv-with-save-dialog-extension/README.ja.html">日本語</a></p>
+
+**Table of Contents:**
 
 - [Overview](#overview)
 	- [Background](#background)

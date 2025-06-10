@@ -1,4 +1,8 @@
 
+<p align="center"><a href="https://tettekete.github.io/vscode-git-mv-with-save-dialog-extension/">English</a> / 日本語</p>
+
+**目次:**
+
 - [概要](#概要)
 	- [背景](#背景)
 - [使い方](#使い方)
