@@ -9,6 +9,15 @@
   "categories": [
     "Other"
   ],
+  "publisher": "tettekete",
+  "author": "tettekete",
+  "license": "MIT",
+  "icon": "docs/images/git-add-with-save-dialog.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tettekete/vscode-git-mv-with-save-dialog-extension"
+  },
+  "homepage": "https://tettekete.github.io/vscode-git-mv-with-save-dialog-extension/",
   "activationEvents": [
     "onStartupFinished"
   ],
