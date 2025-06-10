@@ -9,13 +9,15 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "git-mv-with-dialog.gitMvWithDialog",
-        "title": "with file save dialog",
+        "command": "git-mv-with-save-dialog.gitMvWithSaveDialog",
+        "title": "with save dialog",
         "category": "git mv"
       }
     ]
