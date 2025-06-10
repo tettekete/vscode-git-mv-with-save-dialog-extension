@@ -1,6 +1,6 @@
 {
-  "name": "git-mv-with-dialog",
-  "displayName": "git mv with dialog",
+  "name": "git-mv-with-save-dialog",
+  "displayName": "git mv with save dialog",
   "description": "Use the file save dialog to perform `git mv`, and automatically reopen any files that were already open in VSCode.",
   "version": "0.1.0",
   "engines": {
