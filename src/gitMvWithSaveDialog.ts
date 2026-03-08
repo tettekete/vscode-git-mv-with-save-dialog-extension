@@ -5,16 +5,30 @@ import {
 } from './lib/utils';
 import path from 'node:path';
 import { execGitCommand } from './lib/execGitCommands';
+import { isGitTrackedFile } from './lib/gitCommandUtils';
+
+function getCurrentTargetUrl(): vscode.Uri | undefined
+{
+	const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+	const input = tab?.input;
+
+	if( input instanceof vscode.TabInputText || input instanceof vscode.TabInputCustom || input instanceof vscode.TabInputNotebook )
+	{
+		return input.uri;
+	}
+	
+	return undefined;
+}
 
 export async function gitMvWithSaveDialog()
 {
-	const editor = vscode.window.activeTextEditor;
-	if (! editor)
+	const oldUri = getCurrentTargetUrl();
+	if (! oldUri )
 	{
+		vscode.window.showErrorMessage('The file is not open, or this is an unsupported tab.');
 		return;
 	}
 
-	const oldUri = editor.document.uri;
 	const workspaceFolder = findWorkspaceFolder( oldUri.fsPath );
 	if( workspaceFolder === undefined )
 	{
@@ -26,6 +40,12 @@ export async function gitMvWithSaveDialog()
 	if (! oldRelPath)
 	{
 		oldRelPath = path.basename( oldUri.fsPath );
+	}
+
+	if( ! await isGitTrackedFile( workspaceFolder, oldRelPath ) )
+	{
+		vscode.window.showErrorMessage(`"${oldRelPath}" is not tracked by Git.`);
+		return;
 	}
 
 	const newUri = await vscode.window.showSaveDialog(
