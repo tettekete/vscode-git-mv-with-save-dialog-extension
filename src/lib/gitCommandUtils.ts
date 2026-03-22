@@ -1,5 +1,5 @@
 import {execGitCommand} from './execGitCommands';
-import { escapeArgumentForShell } from './utils';
+import { escapeArgumentForShell,isFilePath } from './utils';
 import path from 'node:path';
 
 /**
@@ -39,13 +39,48 @@ export async function isGitTrackedFile( repo_dir: string ,file_path: string )
 	const relPath = path.isAbsolute( file_path )
 					? path.relative( repo_dir , file_path )
 					: file_path;
-	const safePath = escapeArgumentForShell( relPath );
+	// const safePath = escapeArgumentForShell( relPath );
 	const result = await execGitCommand({
 		command: 'ls-files',
 		options: ['--error-unmatch'],
-		files: [ safePath ],
+		files: [ relPath ],
 		cwd: repo_dir,
 	});
 
 	return ! result.error;
 }
+
+
+/**
+ * 指定されたファイル・ディレクトリパスについて、git リポジトリ配下のファイル、ディレクトリか
+ * チェックし、配下であればそのリポジトリルートのファイルパスを返す。
+ * 
+ * ファイルパスが指定された場合、そのファイルが git 追跡対象であるかどうかは問わない。
+ *
+ * @param {string} filePathOrDirectory 
+ * @returns {Promise<string | undefined>} 
+ */
+export async function findGitRepoRoot( filePathOrDirectory : string )
+:Promise<string | undefined>
+{
+	if( isFilePath( filePathOrDirectory ) )
+	{
+		filePathOrDirectory = path.dirname( filePathOrDirectory );
+	}
+
+	const result = await execGitCommand({
+		command: 'rev-parse',
+		options: [
+			'--show-toplevel'
+		],
+		cwd: filePathOrDirectory
+	});
+	
+	if (result.error) {
+		return undefined;
+	}
+
+	return result.stdout.trim();
+}
+
+export const foundGitRepoRoot = findGitRepoRoot;

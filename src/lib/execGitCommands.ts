@@ -31,7 +31,7 @@ const kGitIndexLockedRegex = /^fatal: Unable to create(?:.+)\.git\/index\.lock':
  */
 export async function execGitCommand(
 	{
-		 command
+		command
 		,options = []
 		,files = []
 		,cwd
@@ -41,7 +41,7 @@ export async function execGitCommand(
 		command: string,
 		options?: string[],
 		files?: string[] ,
-		cwd: string,
+		cwd?: string,
 		usePeriodWhenEmptyFiles?: boolean,
 	}
 ):Promise<CommandResult>
@@ -143,7 +143,7 @@ function _buildGitCommand(
 		command: string,
 		options?: string[],
 		files?: string[] ,
-		cwd: string,
+		cwd?: string,
 		usePeriodWhenEmptyFiles?: boolean
 	}
 ):string
@@ -151,13 +151,7 @@ function _buildGitCommand(
 	const cmdList:string[] = ['git' , command];
 	const filesAsArgs = files.map((file) =>
 	{
-		let relPath = file;
-		if( path.isAbsolute( relPath ) )
-		{
-			relPath = path.relative( cwd , file );
-		}
-
-		return escapeArgumentForShell( relPath );
+		return escapeArgumentForShell( file );
 	});
 
 	// handle command options

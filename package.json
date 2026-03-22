@@ -25,11 +25,42 @@
   "contributes": {
     "commands": [
       {
-        "command": "git-mv-with-save-dialog.gitMvWithSaveDialog",
+        "command": "git-mv-with-save-dialog.gitMvFromActiveEditor",
         "title": "with save dialog",
         "category": "git mv"
+      },
+      {
+        "command": "git-mv-with-save-dialog.gitMvFromExplorer",
+        "title": "git mv with save dialog"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette":[
+        {
+          "command": "git-mv-with-save-dialog.gitMvFromActiveEditor"
+        },
+        {
+          "command": "git-mv-with-save-dialog.gitMvFromExplorer",
+          "when": "git-mv-with-save-dialog.notShowInCommandPalette"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "git-mv-with-save-dialog.gitMvFromExplorer",
+          "group": "1_tettekete_git_extensions"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "git mv with save dialog",
+      "properties": {
+        "git-mv-with-save-dialog.warnOnSkippingUntrackedExplorerFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a warning before skipping untracked files during Explorer-based git mv operations."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
