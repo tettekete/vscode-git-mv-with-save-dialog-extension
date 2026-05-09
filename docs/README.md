@@ -6,6 +6,9 @@
 - [Overview](#overview)
 	- [Background](#background)
 - [Usage](#usage)
+	- [Use from Command Palette](#use-from-command-palette)
+	- [Use from Explorer Context Menu](#use-from-explorer-context-menu)
+		- [Notes](#notes)
 - [Bug Reports and Feature Requests](#bug-reports-and-feature-requests)
 - [Appendix](#appendix)
 	- [Feature Comparison](#feature-comparison)
@@ -32,10 +35,26 @@ As a result, it prevents mistakes like editing and saving an old buffer after a 
 
 # Usage
 
+## Use from Command Palette
+
 1. Focus the editor of the file you'd like to move with `git mv`
 2. Open the Command Palette and type `git mv`
 3. Select `git mv: with file save dialog`
 4. Choose a destination file name from the save dialog
+
+## Use from Explorer Context Menu
+
+1. In Explorer, select one or more files/folders you want to move
+2. Right-click and choose `git mv: with save dialog`
+3. For a single file, choose a destination file path in the save dialog
+4. For a single folder or multiple targets, choose a destination directory in the folder picker
+
+### Notes
+
+- If selected files/folders have a parent-child relationship, child entries take precedence, and parent or ancestor folders are treated as unselected
+- If you run the command from a blank area in Explorer, it is handled as having no target
+- If untracked files are included under a selected folder, they are also moved. This is due to the behavior of the `git mv` command.
+- If selected files are not managed by Git, they are ignored
 
 
 # Bug Reports and Feature Requests
