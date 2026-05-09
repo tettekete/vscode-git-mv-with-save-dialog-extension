@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
+import path from 'node:path';
 import {
+	EditorUriMapping,
+	getOpenedTextEditorUris,
 	getRelativePath,
+	updateEditorUris,
 	updateEditorUri
 } from './lib/utils';
 import {
@@ -346,18 +350,26 @@ async function moveSingleFile( repoRoot: string, target: MoveTarget )
  */
 async function moveSingleDirectory( repoRoot: string, target: MoveTarget )
 {
+	// 移動先ディレクトリ選択ダイアログを使って移動先ディレクトリを取得します
 	const destinationDirUri = await chooseDestinationDirectory( target.relPath );
 	if( ! destinationDirUri )
 	{
 		return;
 	}
 
+	// repoRoot からの相対パスを取得することで同時に移動先が同一リポジトリ配下であることを確認します
 	const destinationDirRelPath = getRelativePath( destinationDirUri.fsPath, repoRoot );
 	if( destinationDirRelPath === undefined )
 	{
 		vscode.window.showErrorMessage(`"${destinationDirUri.fsPath}" is not in the same Git repository.`);
 		return;
 	}
+
+	// basename はファイル名では無く移動元ディレクトリ名になることに注意
+	const destinationUri = vscode.Uri.file(
+		path.join( destinationDirUri.fsPath, path.basename( target.uri.fsPath ) )
+	);
+	const editorMappings = createDirectoryEditorMappings( target.uri, destinationUri );
 
 	const result = await execGitCommand(
 		{
@@ -372,7 +384,10 @@ async function moveSingleDirectory( repoRoot: string, target: MoveTarget )
 		vscode.window.showErrorMessage(
 			`git mv "${target.relPath}" to "${destinationDirRelPath}" failed: ${result.error.message}`
 		);
+		return;
 	}
+
+	await updateEditorUris( editorMappings );
 }
 
 /**
@@ -402,6 +417,7 @@ async function moveMultipleTargets( repoRoot: string, targets: MoveTarget[] )
 		return;
 	}
 
+	const editorMappings = createMultipleTargetEditorMappings( targets, destinationDirUri );
 	const sourcePaths = targets.map((target) => target.relPath);
 	const result = await execGitCommand(
 		{
@@ -416,7 +432,10 @@ async function moveMultipleTargets( repoRoot: string, targets: MoveTarget[] )
 		vscode.window.showErrorMessage(
 			`git mv "${sourcePaths.join('" "')}" to "${destinationDirRelPath}" failed: ${result.error.message}`
 		);
+		return;
 	}
+
+	await updateEditorUris( editorMappings );
 }
 
 /**
@@ -447,4 +466,66 @@ async function chooseDestinationDirectory( oldRelPath?: string ):Promise<vscode.
 	}
 
 	return result[0];
+}
+
+/**
+ * 単一ディレクトリ移動時に、開いている text タブの URI 対応表を生成します。
+ *
+ * @param {vscode.Uri} oldDirUri 
+ * @param {vscode.Uri} newDirUri 
+ * @returns {EditorUriMapping[]} 
+ */
+function createDirectoryEditorMappings(
+	oldDirUri: vscode.Uri,
+	newDirUri: vscode.Uri
+):EditorUriMapping[]
+{
+	return getOpenedTextEditorUris()
+		.flatMap((openedUri) =>
+		{
+			const relativePath = getRelativePath( openedUri.fsPath, oldDirUri.fsPath );
+			if( relativePath === undefined )
+			{
+				return [];
+			}
+
+			return [
+				{
+					oldUri: openedUri,
+					newUri: vscode.Uri.file( path.join( newDirUri.fsPath, relativePath ) )
+				}
+			];
+		});
+}
+
+/**
+ * 複数対象移動時に、開いている text タブの URI 対応表を生成します。
+ *
+ * @param {MoveTarget[]} targets 
+ * @param {vscode.Uri} destinationDirUri 
+ * @returns {EditorUriMapping[]} 
+ */
+function createMultipleTargetEditorMappings(
+	targets: MoveTarget[],
+	destinationDirUri: vscode.Uri
+):EditorUriMapping[]
+{
+	return targets.flatMap((target) =>
+	{
+		const destinationUri = vscode.Uri.file(
+			path.join( destinationDirUri.fsPath, path.basename( target.uri.fsPath ) )
+		);
+
+		if( target.kind === 'file' )
+		{
+			return [
+				{
+					oldUri: target.uri,
+					newUri: destinationUri
+				}
+			];
+		}
+
+		return createDirectoryEditorMappings( target.uri, destinationUri );
+	});
 }

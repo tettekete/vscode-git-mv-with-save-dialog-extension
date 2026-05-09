@@ -3,6 +3,12 @@ import path from 'node:path';
 import * as os from 'node:os';
 import fs from 'node:fs';
 
+export type EditorUriMapping =
+{
+	oldUri: vscode.Uri;
+	newUri: vscode.Uri;
+};
+
 /**
  * Find the workspace folder that contains the given file path.
  * @param filePath The file path to check.
@@ -101,12 +107,57 @@ export async function sleep( sec:number ):Promise<void>
  */
 export async function updateEditorUri( oldUri: vscode.Uri, newUri: vscode.Uri )
 {
-	const newDoc	= await vscode.workspace.openTextDocument(newUri);
+	await updateEditorUris([
+		{
+			oldUri,
+			newUri
+		}
+	]);
+}
+
+/**
+ * 指定された URI 対応表に従って、開いている text タブを新しい URI で開き直します。
+ *
+ * @async
+ * @param {EditorUriMapping[]} mappings 
+ * @returns {Promise<void>} 
+ */
+export async function updateEditorUris( mappings: EditorUriMapping[] ):Promise<void>
+{
+	for( const mapping of mappings )
+	{
+		await reopenEditorByMapping( mapping );
+	}
+}
+
+/**
+ * 現在開いている text タブの URI 一覧を返します。
+ *
+ * @returns {vscode.Uri[]} 
+ */
+export function getOpenedTextEditorUris():vscode.Uri[]
+{
+	return vscode.window.tabGroups.all
+		.flatMap((group) => group.tabs)
+		.flatMap((tab) =>
+		{
+			if( tab.input instanceof vscode.TabInputText )
+			{
+				return [ tab.input.uri ];
+			}
+
+			return [];
+		});
+}
+
+async function reopenEditorByMapping( mapping: EditorUriMapping ):Promise<void>
+{
+	const newDoc = await vscode.workspace.openTextDocument( mapping.newUri );
 
 	while( true )
 	{
 		// オリジンファイルを失った閉じるべきタブを探します
-		const oldTab = findOldTab( oldUri );
+		const oldTab = findOldTab( mapping.oldUri );
 		if( ! oldTab ){ break; } // 古いタブが見つからなければ終了
 
 		const activeTabInfo = await getActiveTabInfo( oldTab.group );
@@ -121,7 +172,7 @@ export async function updateEditorUri( oldUri: vscode.Uri, newUri: vscode.Uri )
 		);
 
 		if( ! activeTabInfo ){ continue; }
-		if( activeTabInfo.doc.uri.fsPath === oldUri.fsPath ) { continue; }
+		if( activeTabInfo.doc.uri.fsPath === mapping.oldUri.fsPath ) { continue; }
 
 		await vscode.window.showTextDocument(
 			activeTabInfo.doc, 
@@ -132,7 +183,6 @@ export async function updateEditorUri( oldUri: vscode.Uri, newUri: vscode.Uri )
 			}
 		);
 	}
-	
 }
 
 
